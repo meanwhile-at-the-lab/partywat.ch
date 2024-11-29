@@ -1,0 +1,19 @@
+* {
+    margin: 1vmin;
+    font-family: sans-serif;
+    border: 1px solid black;
+}
+.flex-col {
+    display: flex;
+    flex-direction: column;
+}
+.flex-row {
+    display: flex;
+    flex-direction: row;
+}
+.flex-grow {
+    flex-grow: 1;
+}
+#sidebar {
+    min-width: 25vw;
+}
