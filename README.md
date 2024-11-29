@@ -1,4 +1,6 @@
-# partywat.ch
+# Partywat.ch
+
+## Watch Youtube, in a party! 🥳
 
 ## Installing
 
@@ -17,4 +19,3 @@ Activate the venv and then
 Backend: `uvicorn main:app --reload`
 
 Frontend: `npm run dev`
-
