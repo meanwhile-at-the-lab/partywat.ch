@@ -1,6 +1,6 @@
-# Partywat.ch
-
-## Watch Youtube, in a party! 🥳
+![partywatch](https://github.com/user-attachments/assets/22183505-bd71-45c3-9cc2-ab7c76a9e0fc)
+<p align="center">Open-source watch party website from your friends at the lab.</p>
+<br><br>
 
 ## Installing
 
