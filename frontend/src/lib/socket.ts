@@ -5,7 +5,9 @@ export const connect = () => {
     return new Promise<void>((resolve, reject) => {
         if (typeof WebSocket !== "undefined") {
             console.log("WebSocket is supported.");
-            ws = new WebSocket("ws://localhost:8000/ws");
+            const url = import.meta.env.VITE_SOCKET_URL as string;
+            console.log("Connecting to", url);
+            ws = new WebSocket(url);
         } else {
             console.error("WebSocket is not supported in this environment.");
             reject("WebSocket is not supported in this environment.");
@@ -60,7 +62,7 @@ export const onMessage = (callback: (message: string) => void) => {
 }
 
 export const awaitMessage = () => {
-    return new Promise<string>((resolve) => {
+    return new Promise<{event: string, message: any}>((resolve) => {
         if (!ws) {
             return Promise.reject("WebSocket is not connected");
         }
