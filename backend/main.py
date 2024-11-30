@@ -1,7 +1,16 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import json
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 rooms = {1234: {"name": "Room 1", "users": 0}, 5678: {"name": "Room 2", "users": 0}}
 
