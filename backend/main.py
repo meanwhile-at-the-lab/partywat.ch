@@ -67,10 +67,10 @@ class Room:
         for u in self.users:
             if alias and u.alias == alias:
                 return u
-            if socket and u.socket == socket:
+            if socket and u.socket == socket or (socket is u.socket):
                 return u
         return None
-
+ 
     def alias_exists(self, alias: str) -> bool:
         return any(u.alias == alias for u in self.users)
 
@@ -97,6 +97,15 @@ async def handle_message(socket: WebSocket, data: dict):
     print("Received", event, message)
     if event == "message":
         await socket.send_text(message)
+    elif event == "disconnect":
+        # HACK: Quick and dirty way to log disconnections w/ aliases
+        print("Disconnecting", socket)
+        for room_id in rooms:
+            print(f"Checking room {room_id}")
+            room = rooms[room_id]
+            user = room.get_user(socket=socket)
+            if user:
+                print(f"User: {user.alias} disconnected")
     elif event == "get-room":
         room_id = int(message)
         if room_id not in rooms:
@@ -153,7 +162,8 @@ async def websocket_endpoint(websocket: WebSocket):
             data = json.loads(data)
             await handle_message(websocket, data)
     except WebSocketDisconnect:
-        print("Client disconnected")
+        await handle_message(websocket, {"event": "disconnect", "message": ""})
+        pass
 
 @app.post("/api/create-room")
 async def create_room(request: Request):
