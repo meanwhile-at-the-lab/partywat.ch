@@ -1,4 +1,3 @@
-
 let ws: WebSocket | null = null;
 
 export const connect = () => {
