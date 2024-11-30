@@ -63,7 +63,7 @@ export const onMessage = (callback: (message: string) => void) => {
 }
 
 export const awaitMessage = () => {
-    return new Promise<string>((resolve) => {
+    return new Promise<{event: string, message: any}>((resolve) => {
         if (!ws) {
             return Promise.reject("WebSocket is not connected");
         }
