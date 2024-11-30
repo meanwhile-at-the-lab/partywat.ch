@@ -15,7 +15,7 @@ print(os.getenv('FRONTEND_PORT'))
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for testing purposes
+    allow_origins=[f"http://localhost:{os.getenv('FRONTEND_PORT')}"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
