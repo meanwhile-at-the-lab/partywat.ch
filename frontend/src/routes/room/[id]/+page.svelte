@@ -2,6 +2,9 @@
   import { onMount, onDestroy } from "svelte";
   import { awaitMessage, connect, sendMessage } from "$lib/socket";
   import { browser } from "$app/environment";
+  import YouTubePlayer from "./YouTubePlayer.svelte";
+
+  let player: YouTubePlayer;
 
   export let data: { props: { id: string } };
   const id: string = data.props.id;
@@ -9,6 +12,7 @@
   let roomData: {} | null = null;
   let alias: string | null = null;
   let isHost = false;
+  let hostCredential: string | null = null;
 
   function sendLeaveRoomMessage() {
     if (browser) {
@@ -19,28 +23,47 @@
     }
   }
 
-  function handleBeforeUnload(event: BeforeUnloadEvent) {
+  function hostStatusChange() {
+    player.setControlsVisibility(isHost);
+  }
+
+  $: if (isHost) {
+    hostStatusChange();
+  }
+
+  function handleBeforeUnload() {
     sendLeaveRoomMessage();
   }
 
   async function handleMessage(message: { event: string; message: any }) {
-    console.log("Received message:", message);
+    console.log("Received message:", Object.keys(message as object));
+    try {
+      message = JSON.parse(message as unknown as string);
+    } catch (err) {}
+    if (typeof message.message === "string") {
+      try {
+        message.message = JSON.parse(message.message);
+      } catch (err) {}
+    }
+
     switch (message.event) {
       case "room-data":
-        roomData = JSON.parse(message.message);
+        roomData = message.message;
         break;
       case "room-joined":
-        const d = JSON.parse(message.message);
+        const d = message.message;
         roomData = d.room;
         alias = d.alias;
         isHost = d.isHost;
         break;
+
       case "user-joined":
         sendMessage({
           event: "get-room",
           message: id,
         });
         let x = await awaitMessage();
+        console.log("Received message (user-joined):", x);
         await handleMessage(x);
         break;
       case "user-left":
@@ -49,24 +72,28 @@
           message: id,
         });
         let y = await awaitMessage();
+        console.log("Received message (user-left):", y);
         await handleMessage(y);
         break;
+      case "video-data":
+        player.handleVideoData(message.message);
+        break;
       default:
-        console.error("Unexpected event:", message.event);
+        console.error("Unexpected event:", message);
     }
   }
-
   onMount(() => {
     if (browser) {
       // Redirect to home page if alias is not provided
       const params = new URLSearchParams(window.location.search);
       alias = params.get("alias");
-      let is_host = params.get("host");
+      hostCredential = params.get("cred") || null;
+      let is_host = params.get("type");
       if (!alias) {
         window.location.href = "/";
       }
       if (!is_host) {
-        is_host = "false";
+        is_host = "guest";
       }
 
       (async () => {
@@ -78,26 +105,26 @@
             message: JSON.stringify({
               id: id,
               alias: alias,
-              type: is_host == "true" ? "host" : "guest",
+              type: is_host,
+              hostCredential: hostCredential,
             }),
           });
           console.log("Joined room");
-          const data = await awaitMessage();
-          console.log("Received message:", data);
+          let data = await awaitMessage();
+          data = JSON.parse(data as unknown as string);
 
           switch (data.event) {
             case "room-not-found":
               roomData = data.message;
               break;
-            case "room-data":
-              roomData = data.message;
-              break;
             case "room-joined":
-              const d = JSON.parse(data.message);
+              const d = data.message;
               console.log(d);
               roomData = d.room;
               alias = d.alias;
               isHost = d.isHost;
+              console.log("isHost:", isHost); // Log isHost value
+              console.log("isHost:", isHost); // Log isHost value
               break;
             default:
               console.error("Unexpected event:", data.event);
@@ -109,6 +136,7 @@
         // Wait for more messages
         while (true) {
           const data = await awaitMessage();
+          console.log("0_Received message:", data);
           await handleMessage(data);
         }
       });
@@ -126,6 +154,35 @@
       sendLeaveRoomMessage();
     }
   });
+
+  function videoSeek(p: YT.Player) {
+    console.log("videoSeek called"); // Log function call
+    if (isHost) {
+      console.log("Sent seek to", p.getCurrentTime());
+      sendMessage({
+        event: "video-seek",
+        message: JSON.stringify({
+          id: id,
+          timestamp: p.getCurrentTime(),
+          hostCredential: hostCredential, // Send host credential
+        }),
+      });
+    }
+  }
+
+  function videoPaused(player: YT.Player) {
+    console.log("videoPaused called"); // Log function call
+    if (isHost) {
+      sendMessage({
+        event: "video-paused",
+        message: JSON.stringify({
+          id: id,
+          is_paused: player.getPlayerState() === YT.PlayerState.PAUSED,
+          hostCredential: hostCredential, // Send host credential
+        }),
+      });
+    }
+  }
 </script>
 
 <h1>Room</h1>
@@ -133,3 +190,10 @@
 <h2 id="roomData">Room Data: {JSON.stringify(roomData)}</h2>
 <h2 id="alias">Alias: {alias}</h2>
 <h2 id="isHost">Is Host: {isHost}</h2>
+
+<YouTubePlayer
+  bind:this={player}
+  onseek={videoSeek}
+  onpause={videoPaused}
+  videoId="dQw4w9WgXcQ"
+/>

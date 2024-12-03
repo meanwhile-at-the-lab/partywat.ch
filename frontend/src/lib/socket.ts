@@ -35,6 +35,7 @@ export const connect = () => {
 };
 
 export const sendMessage = (data: {event: string, message: string}) => {
+    console.log("Sending message:", data);
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(
         JSON.stringify({
@@ -67,7 +68,7 @@ export const awaitMessage = () => {
             return Promise.reject("WebSocket is not connected");
         }
         ws.onmessage = (event) => {
-            resolve(JSON.parse(event.data));
+            resolve(event.data);
         };
     });
 }

@@ -17,12 +17,12 @@
         body: JSON.stringify({ alias }),
       });
       const data = await response.json();
-      const room_data = JSON.parse(data.message);
-
+      const room_data = data.message;
+      const cred = data.hostCredential;
       console.log(room_data);
 
       // Redirect to room page
-      window.location.href = `/room/${room_data.id}?alias=${room_data.host}&type=host`;
+      window.location.href = `/room/${room_data.id}?alias=${room_data.host}&type=host&cred=${cred}`;
     } catch (error) {
       console.error("Error creating room:", error);
     }
